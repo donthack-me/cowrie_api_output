@@ -61,8 +61,8 @@ class Output(cowrie.core.output.Output):
     def __init__(self, cfg):
         """Init."""
         self.cfg = cfg
-        self.token = cfg.get('output_cowrieapi', "token")
-        self.endpoint = cfg.get('output_cowrieapi', "endpoint")
+        self.token = cfg.get('output_donthackme', "token")
+        self.endpoint = cfg.get('output_donthackme', "endpoint")
         cowrie.core.output.Output.__init__(self, cfg)
 
     def headers(self):
