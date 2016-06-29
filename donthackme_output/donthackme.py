@@ -80,6 +80,7 @@ class Output(cowrie.core.output.Output):
             "url": self.make_url(path),
             "data": {
                 "session": logentry["session"],
+                "sensor_name": self.sensor,
                 "sensor_ip": self.sensor,
                 "timestamp": logentry["timestamp"]
             }
