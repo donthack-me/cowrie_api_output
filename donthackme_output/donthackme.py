@@ -81,10 +81,11 @@ class Output(cowrie.core.output.Output):
             "data": {
                 "session": logentry["session"],
                 "sensor_name": self.sensor,
-                "sensor_ip": logentry["dst_ip"],
                 "timestamp": logentry["timestamp"]
             }
         }
+        if "dst_ip" in logentry:
+            data["data"]["sensor_ip"] = logentry["dst_ip"]
         data["data"].update(payload)
 
         for key in popkeys:
