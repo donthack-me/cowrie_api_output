@@ -265,17 +265,17 @@ class Output(cowrie.core.output.Output):
             )
             prepared_entries.append(data)
 
-        elif logentry["eventid"] == "cowrie.direct-tcpip.request":
-            payload = {
-                "dest_port": logentry["dst_port"],
-                "dest_ip": logentry["dst_ip"]
-            }
-            data = self.prepare_entry(
-                logentry,
-                payload,
-                "/cdirect-tcpip/request"
-            )
-            prepared_entries.append(data)
+        # elif logentry["eventid"] == "cowrie.direct-tcpip.request":
+        #     payload = {
+        #         "dest_port": logentry["dst_port"],
+        #         "dest_ip": logentry["dst_ip"]
+        #     }
+        #     data = self.prepare_entry(
+        #         logentry,
+        #         payload,
+        #         "/cdirect-tcpip/request"
+        #     )
+        #     prepared_entries.append(data)
 
         for entry in prepared_entries:
             self.send_data(**entry)
