@@ -16,6 +16,7 @@
 import json
 import base64
 
+from datetime import datetime, timedelta
 from requests import Session, Request
 
 import cowrie.core.output
@@ -41,6 +42,18 @@ import cowrie.core.output
 # }
 
 
+def _send_request(*args, **kwargs):
+        req = Request(*args, **kwargs)
+
+        s = Session()
+        prepped = s.prepare_request(req)
+
+        resp = s.send(prepped)
+        if resp.status_code > 300:
+            raise HttpStatusCodeError(resp)
+        return resp.json()
+
+
 class HttpStatusCodeError(Exception):
     """Error when status code was not expected."""
 
@@ -61,13 +74,48 @@ class Output(cowrie.core.output.Output):
     def __init__(self, cfg):
         """Init."""
         self.cfg = cfg
-        self.token = cfg.get('output_donthackme', "token")
+        self.username = cfg.get('output_donthackme', "username")
+        self.api_key = cfg.get('output_donthackme', "api_key")
         self.endpoint = cfg.get('output_donthackme', "endpoint")
+        self.expires = False
         cowrie.core.output.Output.__init__(self, cfg)
+
+    def refresh_token(self):
+        """If token is close to expiry, retrieve new."""
+        if self.expires and \
+           self.expires < datetime.utcnow() + timedelta(minutes=10):
+            return
+
+        headers = {"Content-Type": "application/json"}
+
+        payload = {
+            "key_auth": {
+                "username": self.username,
+                "api_key": self.api_key
+            }
+        }
+
+        response = _send_request(
+            "GET",
+            "".join([self.endpoint, "/users/token"]),
+            data=json.dumps(payload),
+            headers=headers
+        )
+
+        self.token = response["token"]["id"]
+        self.expires = response["token"]["expires"]
 
     def headers(self):
         """Prepare request headers."""
-        return {"X-Auth-Token": self.token, "Content-Type": "application/json"}
+        self.refresh_token()
+
+        agent_string = "Donthack.Me Cowrie Output Plugin v0.1, User: {0}"
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": msg.format(self.username),
+            "X-JWT": self.token
+        }
+        return headers
 
     def make_url(self, path):
         """Join base endpoint and path."""
@@ -95,20 +143,12 @@ class Output(cowrie.core.output.Output):
 
     def send_data(self, method, url, data):
         """Send data to endpoint."""
-        req = Request(
+        return _send_request(
             method.upper(),
             url,
             data=json.dumps(data),
             headers=self.headers()
         )
-
-        s = Session()
-        prepped = s.prepare_request(req)
-
-        resp = s.send(prepped)
-        if resp.status_code not in [201, 202]:
-            raise HttpStatusCodeError(resp)
-        return resp.json()
 
     def start(self):
         """Start."""
