@@ -86,7 +86,11 @@ class Output(cowrie.core.output.Output):
            self.expires < datetime.utcnow() + timedelta(minutes=10):
             return
 
-        headers = {"Content-Type": "application/json"}
+        agent_string = "Donthack.Me Cowrie Output Plugin v0.1, User: {0}"
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": agent_string.format(self.username)
+        }
 
         payload = {
             "key_auth": {
@@ -102,8 +106,9 @@ class Output(cowrie.core.output.Output):
             headers=headers
         )
 
+        expires = response["token"]["expires"]
         self.token = response["token"]["id"]
-        self.expires = response["token"]["expires"]
+        self.expires = datetime.strptime(expires, "%Y-%m-%dT%H:%M:%S.%fZ")
 
     def headers(self):
         """Prepare request headers."""
@@ -112,7 +117,7 @@ class Output(cowrie.core.output.Output):
         agent_string = "Donthack.Me Cowrie Output Plugin v0.1, User: {0}"
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": msg.format(self.username),
+            "User-Agent": agent_string.format(self.username),
             "X-JWT": self.token
         }
         return headers
